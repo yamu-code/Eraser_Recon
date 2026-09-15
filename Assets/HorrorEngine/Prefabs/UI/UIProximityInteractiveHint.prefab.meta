@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e1afa13aae6a2dc4c8fd28a0de2ee477
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 244541
+  packageName: Retro Horror Template
+  packageVersion: 5.1.1
+  assetPath: Assets/HorrorEngine/Prefabs/UI/UIProximityInteractiveHint.prefab
+  uploadId: 990508

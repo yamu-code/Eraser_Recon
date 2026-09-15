@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 896ef4d91c8e91442ae9a71c500d34c7
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 244541
+  packageName: Retro Horror Template
+  packageVersion: 5.1.1
+  assetPath: Assets/HorrorEngine/Prefabs/UI/UISubtitles.prefab
+  uploadId: 990508

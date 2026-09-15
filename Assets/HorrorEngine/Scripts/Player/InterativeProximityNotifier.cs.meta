@@ -1,0 +1,9 @@
+fileFormatVersion: 2
+guid: 63ad3e68706785249a14b7250a13f420
+AssetOrigin:
+  serializedVersion: 1
+  productId: 244541
+  packageName: Retro Horror Template
+  packageVersion: 5.1.1
+  assetPath: Assets/HorrorEngine/Scripts/Player/InterativeProximityNotifier.cs
+  uploadId: 990508

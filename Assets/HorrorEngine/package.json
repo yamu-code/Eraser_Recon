@@ -1,0 +1,12 @@
+{
+  "name": "com.retrogig.retrohorrortemplate",
+  "displayName": "Retro Horror Template",
+  "description": "The most complete framework to simplify the design and creation of games using classic survival horror mechanics",
+  "unity": "6000.0",
+  "unityRelease": "0f1",
+  "keywords": ["psx", "graphics", "retro", "lowpoly", "template", "horror"],
+  "author": {
+    "name": "Josue Candela",
+    "email": "info@retrogig.com"
+  }
+}

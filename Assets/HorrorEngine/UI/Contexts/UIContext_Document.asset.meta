@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 56360086fa6cdd94c9de2de3c48e7a07
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 244541
+  packageName: Retro Horror Template
+  packageVersion: 5.1.1
+  assetPath: Assets/HorrorEngine/UI/Contexts/UIContext_Document.asset
+  uploadId: 990508
