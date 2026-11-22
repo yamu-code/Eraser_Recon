@@ -6,8 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
-    public enum MoveMode { Idle, Sneak, Walk, Sprint, Exhausted }
-    public enum SprintStyle {  Hold, Toggle }
+    public enum MoveMode { Idle, Sneak, Walk, Sprint, Exhausted }   //MoveMode：今の移動方法の種類(状態)の一覧
+    public enum SprintStyle {  Hold, Toggle }                      //SprintStyle：ダッシュの入力方式(ホールド/トグル)の一覧
 
     [Header("移動速度 (m/秒)")]
     [SerializeField] private float sneakSpeed = 1.2f;   //忍び足
@@ -218,37 +218,40 @@ public class PlayerController : MonoBehaviour
     private bool lastAnimSprinting;         //アニメに送った最後のダッシュ中かどうか
     private float holdTimer;                //方向保持バッファの残り時間
 
-    private CharacterController controller;
-    private Animator animator;
-    private InputSystem_Actions inputActions;
+    private CharacterController controller;     //controller：実際にキャラを動かすためのCharacterController本体
+    private Animator animator;                  //animator：アニメーションを再生するためのAnimator本体
+    private InputSystem_Actions inputActions;   //inputActions：入力を読み取るための箱
 
-    private static readonly int SpeedParam = Animator.StringToHash("Speed");
-    private static readonly int MoveXParam = Animator.StringToHash("MoveX");
-    private static readonly int MoveYParam = Animator.StringToHash("MoveY");
-    private static readonly int IsCrouchingParam = Animator.StringToHash("IsCrouching");
-    private static readonly int MotionSpeedParam = Animator.StringToHash("MotionSpeed");
-    private static readonly int IsSprintingParam = Animator.StringToHash("IsSprinting");
+    private static readonly int SpeedParam = Animator.StringToHash("Speed");               //StringToHash：文字列を数値に変換しておき、毎フレームの文字列比較を避けて高速化する
+    private static readonly int MoveXParam = Animator.StringToHash("MoveX");               //MoveXParam：Animatorの"MoveX"パラメータ用のID
+    private static readonly int MoveYParam = Animator.StringToHash("MoveY");               //MoveYParam：Animatorの"MoveY"パラメータ用のID
+    private static readonly int IsCrouchingParam = Animator.StringToHash("IsCrouching");   //IsCrouchingParam：Animatorの"IsCrouching"パラメータ用のID
+    private static readonly int MotionSpeedParam = Animator.StringToHash("MotionSpeed");   //MotionSpeedParam：Animatorの"MotionSpeed"パラメータ用のID
+    private static readonly int IsSprintingParam = Animator.StringToHash("IsSprinting");   //IsSprintingParam：Animatorの"IsSprinting"パラメータ用のID
 
-    [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private float gravity = -9.81f;   //gravity：1秒あたり落下速度がどれだけ増えるか
 
-    private float verticalVelocity;
-    private bool sprintToggled;
+    private float verticalVelocity;   //verticalVelocity：今の上下方向の速度(重力で落ちる速さ)
+    private bool sprintToggled;       //sprintToggled：トグル方式でダッシュがON状態かどうか
 
+    // 一番最初に1回だけ呼ばれる：必要な部品を取得して変数に入れておく
     private void Awake()
     {
-        controller = GetComponent<CharacterController>();
-        animator = GetComponent<Animator>();
-        inputActions = new InputSystem_Actions();
+        controller = GetComponent<CharacterController>();   //GetComponent：同じGameObjectにあるCharacterControllerを取得する
+        animator = GetComponent<Animator>();                //GetComponent：同じGameObjectにあるAnimatorを取得する
+        inputActions = new InputSystem_Actions();           //new：入力を読み取るための箱を作る
     }
 
+    // このスクリプトが有効になったら入力を受け付け始める
     private void OnEnable()
     {
-        inputActions.Player.Enable();
+        inputActions.Player.Enable();   //Enable：入力の読み取りを開始する
     }
 
+    // このスクリプトが無効になったら入力を受け付けるのをやめる
     private void OnDisable()
     {
-        inputActions.Player.Disable();
+        inputActions.Player.Disable();   //Disable：入力の読み取りを止める
     }
 
     private void Start()
@@ -258,20 +261,21 @@ public class PlayerController : MonoBehaviour
         {
             isCrouching = true;
         }
-       ApplyCrouchHeight();
+       ApplyCrouchHeight();   //始まった時点の高さをCharacterControllerに反映しておく
     }
 
     // Update is called once per frame
+    // 毎フレーム、入力を読んでキャラを動かし、アニメに値を送る
     void Update()
     {
-        Vector2 input = inputActions.Player.Move.ReadValue<Vector2>();
-        ReadCrouchToggle();
-        currentMode = DecideMoveMode(input);
+        Vector2 input = inputActions.Player.Move.ReadValue<Vector2>();   //ReadValue：今の移動入力(スティック/WASD)を取り出す
+        ReadCrouchToggle();                      //しゃがむ/立つの切り替え入力を処理する
+        currentMode = DecideMoveMode(input);     //今の入力から、今の移動方法を決めて覚えておく
 
-        UpdateStamina();
-        ApplyCrouchHeight();
+        UpdateStamina();        //今の移動方法に応じてスタミナを増減させる
+        ApplyCrouchHeight();    //しゃがみ中かどうかをCharacterControllerの高さに反映する
 
-        Vector3 moveDirection = (transform.right * input.x + transform.forward * input.y).normalized;
+        Vector3 moveDirection = (transform.right * input.x + transform.forward * input.y).normalized;   //moveDirection：入力をキャラの向き基準の実際の移動方向に変換する
 
         if(controller.isGrounded && verticalVelocity < 0)
         {
@@ -279,51 +283,51 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            verticalVelocity += gravity * Time.deltaTime;
+            verticalVelocity += gravity * Time.deltaTime;   //空中にいる間は、重力分だけ下向きの速度を増やしていく
         }
 
         float moveSpeed = GetSpeed(currentMode);    //今の移動速度。アニメにも使うので変数に入れる
-        float backward = Mathf.Clamp01(-input.normalized.y);
-        moveSpeed *= Mathf.Lerp(1f, backwardSpeedMultiplier, backward);
-        Vector3 velocity = moveDirection * moveSpeed;
+        float backward = Mathf.Clamp01(-input.normalized.y);   //backward：真後ろ方向への入力の強さ(0〜1)
+        moveSpeed *= Mathf.Lerp(1f, backwardSpeedMultiplier, backward);   //Lerp：後ろ向きの入力が強いほど、速さを倍率分だけ落とす
+        Vector3 velocity = moveDirection * moveSpeed;   //velocity：実際にその方向へ移動する速度
 
-        velocity.y = verticalVelocity;
+        velocity.y = verticalVelocity;   //上下方向(重力)の速度を合成する
 
-        controller.Move(velocity * Time.deltaTime);
+        controller.Move(velocity * Time.deltaTime);   //Move：このフレーム分、実際にキャラを移動させる
 
         //アニメに送る値:キーを持ち替える一瞬の入力ゼロでIdleがチラつかないように、入力がなくなっても少しの間(directionHoldBuffer秒)は直前の値を送り続ける
         if(input.sqrMagnitude > 0.0001f)
         {
-            lastAnimInput = input;
-            lastAnimSpeed = moveSpeed;
-            lastAnimSprinting = currentMode == MoveMode.Sprint;
-            holdTimer = directionHoldBuffer;
+            lastAnimInput = input;                                       //今の入力をアニメ用に覚えておく
+            lastAnimSpeed = moveSpeed;                                   //今の速さをアニメ用に覚えておく
+            lastAnimSprinting = currentMode == MoveMode.Sprint;          //今ダッシュ中かどうかをアニメ用に覚えておく
+            holdTimer = directionHoldBuffer;                             //バッファの残り時間をリセットする
         }
         else if(holdTimer > 0f)
         {
-            holdTimer -= Time.deltaTime;
+            holdTimer -= Time.deltaTime;   //入力が無くなってからの経過時間分だけバッファを減らす
         }
         else
         {
-            lastAnimSpeed = 0f;
-            lastAnimSprinting = false;
+            lastAnimSpeed = 0f;          //バッファも切れたので、止まっている速さ(0)にする
+            lastAnimSprinting = false;   //ダッシュ中でもなくする
         }
 
         //方向は長さ1にして送る(倒し具合でブレンドが崩れないように)
-        Vector2 animDir = lastAnimInput.normalized;
-        animator.SetFloat(MoveXParam, animDir.x);
-        animator.SetFloat(MoveYParam, animDir.y);
+        Vector2 animDir = lastAnimInput.normalized;        //animDir：方向だけを取り出した(長さ1の)ベクトル
+        animator.SetFloat(MoveXParam, animDir.x);          //SetFloat：Animatorの"MoveX"パラメータに値を送る
+        animator.SetFloat(MoveYParam, animDir.y);          //SetFloat：Animatorの"MoveY"パラメータに値を送る
 
         //速さを送る。止まった/動いたの判定(0.1)に使う
-        animator.SetFloat(SpeedParam, lastAnimSpeed);
+        animator.SetFloat(SpeedParam, lastAnimSpeed);      //SetFloat：Animatorの"Speed"パラメータに値を送る
 
         //ダッシュ中かどうかを送る。Walk⇔Runの切り替えに使う
-        animator.SetBool(IsSprintingParam, lastAnimSprinting);
+        animator.SetBool(IsSprintingParam, lastAnimSprinting);   //SetBool：Animatorの"IsSprinting"パラメータに値を送る
 
         //足の速さを移動の速さに合わせる倍率 = 移動速度 ÷ 基準の速さ(全方向共通なので、どの向きでも足の回転の速さがそろう)
-        float clipSpeed = lastAnimSprinting ? runClipSpeeds : walkClipSpeeds;
-        animator.SetFloat(MotionSpeedParam, lastAnimSpeed > 0f ? lastAnimSpeed / clipSpeed : 1f);
+        float clipSpeed = lastAnimSprinting ? runClipSpeeds : walkClipSpeeds;   //clipSpeed：今の状態(歩き/ダッシュ)に応じた、アニメ本来の速さ
+        animator.SetFloat(MotionSpeedParam, lastAnimSpeed > 0f ? lastAnimSpeed / clipSpeed : 1f);   //SetFloat：Animatorの"MotionSpeed"パラメータに倍率を送る
 
-        animator.SetBool(IsCrouchingParam, isCrouching);
+        animator.SetBool(IsCrouchingParam, isCrouching);   //SetBool：Animatorの"IsCrouching"パラメータに値を送る(しゃがみアニメへの切り替えに使う)
     }
 }
